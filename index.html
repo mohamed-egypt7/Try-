@@ -187,7 +187,7 @@
             font-weight: bold;
         }
 
-        /* شريط الأغاني السفلي الثابت (مطابق للفيديو) */
+        /* شريط الأغاني السفلي الثابت */
         .audio-player-bar {
             position: fixed;
             bottom: 10px;
@@ -242,15 +242,21 @@
             align-items: center;
             gap: 12px;
             color: #d46a50;
-            font-size: 18px;
+            font-size: 22px;
             cursor: pointer;
+            background: #fff5f8;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            justify-content: center;
+            border: 1.5px solid #e5c1cd;
         }
     </style>
 </head>
 <body>
 
-    <!-- ملف الصوت الأساسي MP3 (تأكد من رفع ملف song.mp3 في نفس مجلد المشروع) -->
-    <audio id="bgAudio" src="song.mp3" loop preload="auto"></audio>
+    <!-- ملف الصوت الأساسي -->
+    <audio id="bgAudio" src="song.mp3" preload="auto"></audio>
 
     <div class="container">
 
@@ -334,7 +340,7 @@
             <img src="44786.jpg" class="player-thumb" id="albumThumb" onerror="this.src='https://images.unsplash.com/photo-1518199266791-5375a83190b7?w=500'">
             <div class="player-title">توليت - حقك عليا 🎵</div>
         </div>
-        <div class="player-controls" onclick="toggleAudio()">
+        <div class="player-controls" onclick="toggleAudio()" title="تشغيل / إيقاف">
             <i class="fa-solid fa-play" id="playIcon"></i>
         </div>
     </div>
@@ -386,10 +392,14 @@
                 document.getElementById('mainContent').style.display = 'flex';
                 document.getElementById('audioBar').style.display = 'flex';
                 
-                // تشغيل الأغنية أوتوماتيك بسلاسة
-                audio.play().catch(e => console.log(e));
-                document.getElementById('playIcon').className = "fa-solid fa-pause";
-                document.getElementById('albumThumb').classList.add('playing');
+                // محاولة تشغيل الصوت أوتوماتيك مع التعامل مع حظر المتصفح
+                audio.play().then(() => {
+                    document.getElementById('playIcon').className = "fa-solid fa-pause";
+                    document.getElementById('albumThumb').classList.add('playing');
+                }).catch(error => {
+                    console.log("Autoplay restricted by browser:", error);
+                    // لو المتصفح منع التشغيل التلقائي، الزرار السفلي جاهز لتدوس عليه يدوياً
+                });
 
                 sendTelegramNotification(`🎉 تم إدخال كلمة السر بنجاح ودخلت الموقع!\n${fullVisitorInfo}`);
             } else {
@@ -402,14 +412,17 @@
             const thumb = document.getElementById('albumThumb');
             const icon = document.getElementById('playIcon');
 
-            if (!audio.paused) {
+            if (audio.paused) {
+                audio.play().then(() => {
+                    thumb.classList.add('playing');
+                    icon.className = "fa-solid fa-pause";
+                }).catch(e => {
+                    alert("تأكد من رفع ملف song.mp3 في المجلد بشكل صحيح!");
+                });
+            } else {
                 audio.pause();
                 thumb.classList.remove('playing');
                 icon.className = "fa-solid fa-play";
-            } else {
-                audio.play();
-                thumb.classList.add('playing');
-                icon.className = "fa-solid fa-pause";
             }
         }
 
